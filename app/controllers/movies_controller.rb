@@ -11,21 +11,37 @@ class MoviesController < ApplicationController
   end
 
   def index
-    sort_by = params[:sort]
-    if sort_by == 'title'
-      @movies = Movie.sort_title
-    elsif sort_by == 'date'
-      @movies = Movie.sort_release_date
+    path_change = false # keep track if redirect needed
+    
+    # sort movies by param
+    if params[:sort]
+      @movies = Movie.sort_by(params[:sort])
+      session[:sort] = params[:sort]
+    elsif session[:sort]
+      @movies = Movie.sort_by(session[:sort])
+      params[:sort] = session[:sort]
+      path_change = true
     else
       @movies = Movie.all
     end
     
+    # sort movies by checked ratings
     @all_ratings = Movie.unique_ratings
-    
-    @checked_ratings = @all_ratings
     if params[:ratings]
       @checked_ratings = params[:ratings].keys
-      @movies = Movie.filter_ratings(@checked_ratings)
+      session[:ratings] = params[:ratings]
+    elsif session[:ratings]
+      @checked_ratings = session[:ratings].keys
+      params[:ratings] = session[:ratings]
+      path_change = true
+    else
+      @checked_ratings = @all_ratings
+    end
+    @movies = Movie.filter_ratings(@checked_ratings, @movies)
+    
+    # redirect if needed to keep RESTfulness 
+    if path_change
+      redirect_to(movies_path(:sort => params[:sort], :ratings => params[:ratings]))
     end
   end
 
