@@ -13,11 +13,19 @@ class MoviesController < ApplicationController
   def index
     sort_by = params[:sort]
     if sort_by == 'title'
-      @movies = Movie.all.order(:title)
+      @movies = Movie.sort_title
     elsif sort_by == 'date'
-      @movies = Movie.all.order(:release_date)
+      @movies = Movie.sort_release_date
     else
       @movies = Movie.all
+    end
+    
+    @all_ratings = Movie.unique_ratings
+    
+    @checked_ratings = @all_ratings
+    if params[:ratings]
+      @checked_ratings = params[:ratings].keys
+      @movies = Movie.filter_ratings(@checked_ratings)
     end
   end
 
